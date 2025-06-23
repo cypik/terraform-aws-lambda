@@ -10,14 +10,15 @@ locals {
 # Lambda function configuration
 module "lambda" {
   source                         = "../../"
+  use_s3                         = true
   name                           = local.name
   environment                    = local.environment
   reserved_concurrent_executions = -1
-  s3_bucket_name                 = "testtwaeguqwe"
+  s3_bucket_name                 = "testtwadwdnk38ndi3qwe"
   s3_object_key                  = "index.zip"
   s3_object_acl                  = "private"
-  handler                        = "index.handler"
-  runtime                        = "nodejs18.x"
+  handler                        = "lambda_function.handler"
+  runtime                        = "python3.12"
   variables = {
     foo = "bar"
   }

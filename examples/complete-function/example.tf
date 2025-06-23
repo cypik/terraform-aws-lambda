@@ -11,9 +11,9 @@ module "lambda" {
   source                            = "../../"
   name                              = local.name
   environment                       = local.environment
-  filename                          = "../../lambda_packages/index.zip" # -- The content of index.py should be present in zip format
-  handler                           = "index.lambda_handler"
-  runtime                           = "python3.8"
+  filename                          = "../../lambda_packages/index.zip"
+  handler                           = "lambda_function.handler"
+  runtime                           = "python3.12"
   compatible_architectures          = ["arm64"]
   timeout                           = 60
   reserved_concurrent_executions    = -1
@@ -38,9 +38,9 @@ module "lambda" {
   # -- Lambda Layer
   create_layers   = true
   layer_names     = ["python_layer"]
-  layer_filenames = ["../../lambda_packages/layer.zip"] # -- The content of layer.py should be present in zip format
+  layer_filenames = ["../../lambda_packages/layer.zip"]
   compatible_runtimes = [
-    ["python3.8", "python3.10"],
+    ["python3.12", "python3.11"],
   ]
 
   # -- Resource-based policy statements
