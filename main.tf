@@ -14,15 +14,19 @@ resource "aws_lambda_layer_version" "default" {
   layer_name               = element(var.layer_names, count.index)
   description              = length(var.descriptions) > 0 ? element(var.descriptions, count.index) : ""
   license_info             = length(var.license_infos) > 0 ? element(var.license_infos, count.index) : ""
-  filename                 = length(var.layer_filenames) > 0 ? element(var.layer_filenames, count.index) : null
-  s3_bucket                = length(var.s3_buckets) > 0 ? element(var.s3_buckets, count.index) : null
-  s3_key                   = length(var.s3_keys) > 0 ? element(var.s3_keys, count.index) : null
-  s3_object_version        = length(var.s3_object_versions) > 0 ? element(var.s3_object_versions, count.index) : null
+
+  # ✅ Use filename only when use_s3 is false
+  filename                 = var.use_s3 == false && length(var.layer_filenames) > 0 ? element(var.layer_filenames, count.index) : null
+  s3_bucket                = var.use_s3 == true && length(var.s3_buckets) > 0 ? element(var.s3_buckets, count.index) : null
+  s3_key                   = var.use_s3 == true && length(var.s3_keys) > 0 ? element(var.s3_keys, count.index) : null
+  s3_object_version        = var.use_s3 == true && length(var.s3_object_versions) > 0 ? element(var.s3_object_versions, count.index) : null
   compatible_runtimes      = element(var.compatible_runtimes, count.index)
   compatible_architectures = var.compatible_architectures
   skip_destroy             = var.skip_destroy
-  source_code_hash         = var.enable_source_code_hash ? filebase64sha256(element(var.layer_filenames, count.index)) : null
+  source_code_hash = (var.enable_source_code_hash && var.use_s3 == false) ? filebase64sha256(element(var.layer_filenames, count.index)) : null
+
 }
+
 
 #tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "default" {
