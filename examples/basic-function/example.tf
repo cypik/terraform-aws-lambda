@@ -11,9 +11,9 @@ module "lambda" {
   source      = "../../"
   name        = local.name
   environment = local.environment
-  filename    = "../../lambda_packages/index.zip"
-  handler     = "index.lambda_handler"
-  runtime     = "python3.7"
+  filename    = "../../lambda_packages/lambda_code/index.zip"
+  handler     = "lambda_function.handler"
+  runtime     = "python3.12"
   variables = {
     foo = "bar"
   }

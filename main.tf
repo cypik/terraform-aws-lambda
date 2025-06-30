@@ -1,6 +1,6 @@
 module "labels" {
   source      = "cypik/labels/aws"
-  version     = "1.3.0"
+  version     = "1.0.2"
   name        = var.name
   repository  = var.repository
   environment = var.environment
@@ -14,19 +14,23 @@ resource "aws_lambda_layer_version" "default" {
   layer_name               = element(var.layer_names, count.index)
   description              = length(var.descriptions) > 0 ? element(var.descriptions, count.index) : ""
   license_info             = length(var.license_infos) > 0 ? element(var.license_infos, count.index) : ""
-  filename                 = length(var.layer_filenames) > 0 ? element(var.layer_filenames, count.index) : null
-  s3_bucket                = length(var.s3_buckets) > 0 ? element(var.s3_buckets, count.index) : null
-  s3_key                   = length(var.s3_keys) > 0 ? element(var.s3_keys, count.index) : null
-  s3_object_version        = length(var.s3_object_versions) > 0 ? element(var.s3_object_versions, count.index) : null
+
+  # ✅ Use filename only when use_s3 is false
+  filename                 = var.use_s3 == false && length(var.layer_filenames) > 0 ? element(var.layer_filenames, count.index) : null
+  s3_bucket                = var.use_s3 == true && length(var.s3_buckets) > 0 ? element(var.s3_buckets, count.index) : null
+  s3_key                   = var.use_s3 == true && length(var.s3_keys) > 0 ? element(var.s3_keys, count.index) : null
+  s3_object_version        = var.use_s3 == true && length(var.s3_object_versions) > 0 ? element(var.s3_object_versions, count.index) : null
   compatible_runtimes      = element(var.compatible_runtimes, count.index)
   compatible_architectures = var.compatible_architectures
   skip_destroy             = var.skip_destroy
-  source_code_hash         = var.enable_source_code_hash ? filebase64sha256(element(var.layer_filenames, count.index)) : null
+  source_code_hash = (var.enable_source_code_hash && var.use_s3 == false) ? filebase64sha256(element(var.layer_filenames, count.index)) : null
+
 }
+
 
 #tfsec:ignore:aws-lambda-enable-tracing
 resource "aws_lambda_function" "default" {
-  count                          = (length(aws_s3_bucket.lambda_bucket) > 0 && length(aws_s3_object.lambda_zip) > 0) ? 1 : 0
+  count                          = var.enable && var.lambda_enabled ? 1 : 0
   function_name                  = module.labels.id
   description                    = var.description
   role                           = var.create_iam_role ? join("", aws_iam_role.default[*].arn) : var.iam_role_arn
@@ -42,14 +46,14 @@ resource "aws_lambda_function" "default" {
   package_type                   = var.package_type
   architectures                  = var.architectures
   code_signing_config_arn        = var.code_signing_config_arn
-  filename                       = var.source_file != null ? format("%s.zip", module.labels.id) : var.filename != null ? var.filename : null
-  s3_bucket                      = aws_s3_bucket.lambda_bucket[0].bucket
-  s3_key                         = aws_s3_object.lambda_zip[0].key
+  filename                       = var.use_s3 == false ? var.filename : null
+  s3_bucket                      = var.use_s3 == true ? aws_s3_bucket.lambda_bucket[0].bucket : null
+  s3_key                         = var.use_s3 == true ? aws_s3_object.lambda_zip[0].key : null
 
   s3_object_version = var.s3_object_version
-  source_code_hash  = var.enable_source_code_hash ? filebase64sha256(var.filename) : null
-  tags              = module.labels.tags
-
+  source_code_hash = var.enable_source_code_hash ? (
+    var.use_s3 == false ? filebase64sha256(var.filename) : null
+  ) : null
   dynamic "ephemeral_storage" {
     for_each = var.ephemeral_storage_size == null ? [] : [true]
 

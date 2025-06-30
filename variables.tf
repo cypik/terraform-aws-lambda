@@ -271,12 +271,6 @@ variable "create_iam_role" {
   description = "Flag to control creation of iam role and its related resources."
 }
 
-variable "source_file" {
-  type        = string
-  default     = null
-  description = "Path of source file that is required to be converted in `.zip` file"
-}
-
 variable "enable_source_code_hash" {
   type        = bool
   default     = false
@@ -445,4 +439,16 @@ variable "s3_object_acl" {
   description = "(Optional) The canned ACL to apply (default: private)."
   type        = string
   default     = "private"
+}
+
+variable "use_s3" {
+  description = "Use S3 for Lambda deployment package"
+  type        = bool
+  default     = false
+}
+
+variable "lambda_enabled" {
+  description = "Enable Lambda function creation"
+  type        = bool
+  default     = true
 }
