@@ -1,22 +1,16 @@
 provider "aws" {
-  region = "us-east-1"
-}
-
-locals {
-  name        = "lambda"
-  environment = "dev"
+  region = "ap-south-1"
 }
 
 module "lambda" {
   source                            = "../../"
-  name                              = local.name
-  environment                       = local.environment
+  name                              = "lambda"
+  environment                       = "dev"
   filename                          = "../../lambda_packages/index.zip"
   handler                           = "lambda_function.handler"
-  runtime                           = "python3.12"
-  compatible_architectures          = ["arm64"]
+  runtime                           = "python3.13"
+  compatible_architectures          = ["x86_64"]
   timeout                           = 60
-  reserved_concurrent_executions    = -1
   cloudwatch_logs_retention_in_days = 7
 
   # -- ARNs of Triggers
@@ -38,7 +32,7 @@ module "lambda" {
   # -- Lambda Layer
   create_layers   = true
   layer_names     = ["python_layer"]
-  layer_filenames = ["../../lambda_packages/layer.zip"]
+  layer_filenames = ["../../lambda_packages/lambda_code/layer.zip"]
   compatible_runtimes = [
     ["python3.12", "python3.11"],
   ]

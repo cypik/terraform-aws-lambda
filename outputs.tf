@@ -1,6 +1,6 @@
 output "name" {
-  description = "The name of the Lambda Function"
   value       = join("", aws_lambda_function.default[*].function_name)
+  description = "The name of the Lambda Function"
 }
 
 output "arn" {

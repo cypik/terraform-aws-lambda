@@ -81,7 +81,7 @@ variable "memory_size" {
 
 variable "timeout" {
   type        = number
-  default     = 10
+  default     = 60
   description = "The amount of time in seconds your Lambda Function will run. Defaults to 3."
 }
 
@@ -93,7 +93,7 @@ variable "runtime" {
 
 variable "reserved_concurrent_executions" {
   type        = number
-  default     = 90
+  default     = -1
   description = "The amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1."
 }
 
@@ -451,4 +451,16 @@ variable "lambda_enabled" {
   description = "Enable Lambda function creation"
   type        = bool
   default     = true
+}
+
+variable "enable_provisioned_concurrency" {
+  type        = bool
+  default     = false
+  description = "Enable provisioned concurrency for the Lambda function. Set to true to pre-allocate a specified number of execution environments."
+}
+
+variable "provisioned_concurrent_executions" {
+  type        = number
+  default     = 0
+  description = "The number of provisioned concurrent executions to allocate for the Lambda function when provisioned concurrency is enabled."
 }
