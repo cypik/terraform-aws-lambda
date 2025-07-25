@@ -22,7 +22,7 @@ To use this module, you should have Terraform installed and configured for AWS. 
 ```hcl
 module "lambda" {
   source      = "cypik/lambda/aws"
-  version     = "1.0.1"
+  version     = "1.0.2"
   name        = "lambda"
   environment = "test"
   filename    = "../../lambda_packages/index.zip"
@@ -39,7 +39,7 @@ module "lambda" {
 ```hcl
 module "lambda" {
   source                            = "cypik/lambda/aws"
-  version                           = "1.0.1"
+  version                           = "1.0.2"
   name                              = "my-app-function"
   environment                       = "prod"
   handler                           = "lambda_function.handler"
@@ -63,7 +63,7 @@ module "lambda" {
 ```hcl
 module "lambda" {
   source         = "cypik/lambda/aws"
-  version        = "1.0.1"
+  version        = "1.0.2"
   name           = "lambda"
   environment    = "test"
   use_s3         = true
@@ -83,7 +83,7 @@ module "lambda" {
 ```hcl
 module "lambda" {
   source                            = "cypik/lambda/aws"
-  version                           = "1.0.1"
+  version                           = "1.0.2"
   name                              = "lambda"
   environment                       = "dev"
   filename                          = "../../lambda_packages/index.zip"
