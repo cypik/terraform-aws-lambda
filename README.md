@@ -38,7 +38,7 @@ module "lambda" {
 
 ```hcl
 module "lambda" {
-  source                           = "cypik/lambda/aws"
+  source                            = "cypik/lambda/aws"
   version                           = "1.0.1"
   name                              = "my-app-function"
   environment                       = "prod"
