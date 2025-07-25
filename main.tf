@@ -321,8 +321,18 @@ resource "aws_s3_object" "lambda_zip" {
 }
 
 resource "null_resource" "zip_lambda" {
-  provisioner "local-exec" {
-    command = "cd ../../lambda_packages/lambda_code && zip ../index.zip lambda_function.py"
+  triggers = {
+    # Will re-run only if the file exists and changes
+    file_hash = fileexists("${path.module}/../../lambda_packages/lambda_code/lambda_function.py") ? filesha256("${path.module}/../../lambda_packages/lambda_code/lambda_function.py") : ""
   }
 
+  provisioner "local-exec" {
+    command = <<EOT
+      if [ -f "../../lambda_packages/lambda_code/lambda_function.py" ]; then
+        cd ../../lambda_packages/lambda_code && zip ../index.zip lambda_function.py
+      else
+        echo "lambda_function.py not found. Skipping ZIP."
+      fi
+    EOT
+  }
 }
