@@ -32,8 +32,8 @@ variable "attributes" {
 
 variable "managedby" {
   type        = string
-  default     = "hello@cypik.com"
-  description = "ManagedBy, eg 'cypik'."
+  default     = "info@cypik.com"
+  description = "ManagedBy, eg 'info@cypik.com'."
 }
 
 # Module      : Lambda function
