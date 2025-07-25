@@ -1,19 +1,14 @@
 provider "aws" {
-  region = "us-east-1"
-}
-
-locals {
-  name        = "lambda"
-  environment = "test"
+  region = "ap-south-1"
 }
 
 module "lambda" {
   source      = "../../"
-  name        = local.name
-  environment = local.environment
-  filename    = "../../lambda_packages/lambda_code/index.zip"
+  name        = "lambda"
+  environment = "test"
+  filename    = "../../lambda_packages/index.zip"
   handler     = "lambda_function.handler"
-  runtime     = "python3.12"
+  runtime     = "python3.13"
   variables = {
     foo = "bar"
   }

@@ -9,11 +9,15 @@ module "labels" {
   label_order = var.label_order
 }
 
+locals {
+  log_group_arn = try(data.aws_cloudwatch_log_group.lambda[0].arn, aws_cloudwatch_log_group.lambda[0].arn, "")
+}
+
 resource "aws_lambda_layer_version" "default" {
-  count                    = var.enable && var.create_layers ? length(var.layer_names) : 0
-  layer_name               = element(var.layer_names, count.index)
-  description              = length(var.descriptions) > 0 ? element(var.descriptions, count.index) : ""
-  license_info             = length(var.license_infos) > 0 ? element(var.license_infos, count.index) : ""
+  count        = var.enable && var.create_layers ? length(var.layer_names) : 0
+  layer_name   = element(var.layer_names, count.index)
+  description  = length(var.descriptions) > 0 ? element(var.descriptions, count.index) : ""
+  license_info = length(var.license_infos) > 0 ? element(var.license_infos, count.index) : ""
 
   # ✅ Use filename only when use_s3 is false
   filename                 = var.use_s3 == false && length(var.layer_filenames) > 0 ? element(var.layer_filenames, count.index) : null
@@ -23,7 +27,7 @@ resource "aws_lambda_layer_version" "default" {
   compatible_runtimes      = element(var.compatible_runtimes, count.index)
   compatible_architectures = var.compatible_architectures
   skip_destroy             = var.skip_destroy
-  source_code_hash = (var.enable_source_code_hash && var.use_s3 == false) ? filebase64sha256(element(var.layer_filenames, count.index)) : null
+  source_code_hash         = (var.enable_source_code_hash && var.use_s3 == false) ? filebase64sha256(element(var.layer_filenames, count.index)) : null
 
 }
 
@@ -123,6 +127,14 @@ resource "aws_lambda_function" "default" {
     ]
   }
   depends_on = [aws_iam_role_policy_attachment.default, aws_cloudwatch_log_group.lambda]
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "example" {
+  count = var.enable && var.enable_provisioned_concurrency ? 1 : 0
+
+  function_name                     = aws_lambda_function.default[count.index].function_name
+  provisioned_concurrent_executions = var.provisioned_concurrent_executions
+  qualifier                         = aws_lambda_function.default[count.index].version
 }
 
 resource "aws_lambda_permission" "default" {
@@ -252,10 +264,6 @@ resource "aws_kms_key_policy" "cloudwatch" {
 
 }
 
-locals {
-  log_group_arn = try(data.aws_cloudwatch_log_group.lambda[0].arn, aws_cloudwatch_log_group.lambda[0].arn, "")
-}
-
 data "aws_cloudwatch_log_group" "lambda" {
   count = var.enable && var.existing_cloudwatch_log_group ? 1 : 0
   name  = var.existing_cloudwatch_log_group_name
@@ -303,9 +311,18 @@ resource "aws_s3_bucket" "lambda_bucket" {
 }
 
 resource "aws_s3_object" "lambda_zip" {
+  depends_on = [null_resource.zip_lambda]
+
   count  = var.enable && var.s3_bucket_name != null ? 1 : 0
   bucket = aws_s3_bucket.lambda_bucket[count.index].bucket
   key    = var.s3_object_key
   source = "../../lambda_packages/index.zip"
   acl    = var.s3_object_acl
+}
+
+resource "null_resource" "zip_lambda" {
+  provisioner "local-exec" {
+    command = "cd ../../lambda_packages/lambda_code && zip ../index.zip lambda_function.py"
+  }
+
 }

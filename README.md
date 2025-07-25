@@ -21,32 +21,57 @@ To use this module, you should have Terraform installed and configured for AWS. 
 
 ```hcl
 module "lambda" {
-  source        = "cypik/lambda/aws"
-  version       = "1.0.0"
-  name          = local.name
-  environment   = local.environment
-  filename      = "../../lambda_packages/index.zip" # -- The content of index.py should be present in zip format
-  handler       = "index.lambda_handler"
-  runtime       = "python3.7"
+  source      = "cypik/lambda/aws"
+  version     = "1.0.1"
+  name        = "lambda"
+  environment = "test"
+  filename    = "../../lambda_packages/index.zip"
+  handler     = "lambda_function.handler"
+  runtime     = "python3.13"
   variables = {
     foo = "bar"
   }
 }
 ```
 
+## Example: concurrency-limits
+
+```hcl
+module "lambda" {
+  source                           = "cypik/lambda/aws"
+  version                           = "1.0.1"
+  name                              = "my-app-function"
+  environment                       = "prod"
+  handler                           = "lambda_function.handler"
+  runtime                           = "python3.13"
+  filename                          = "../../lambda_packages/index.zip"
+  publish                           = true
+  enable_provisioned_concurrency    = true
+  reserved_concurrent_executions    = 5
+  provisioned_concurrent_executions = 3
+  timeout                           = 60
+
+  iam_actions = [
+    "logs:CreateLogGroup",
+    "logs:CreateLogStream",
+    "logs:PutLogEvents"
+  ]
+}
+```
+
 ## Example: basic-s3-function
 ```hcl
 module "lambda" {
-  source                         = "cypik/lambda/aws"
-  version                        = "1.0.0"
-  name                           = local.name
-  environment                    = local.environment
-  reserved_concurrent_executions = -1
-  s3_bucket_name                 = "testtwaeguqwe"
-  s3_object_key                  = "index.zip"
-  s3_object_acl                  = "private"
-  handler                        = "index.handler"
-  runtime                        = "nodejs18.x"
+  source         = "cypik/lambda/aws"
+  version        = "1.0.1"
+  name           = "lambda"
+  environment    = "test"
+  use_s3         = true
+  s3_bucket_name = "lambda-test123345"
+  s3_object_key  = "index.zip"
+  s3_object_acl  = "private"
+  handler        = "lambda_function.handler"
+  runtime        = "python3.13"
   variables = {
     foo = "bar"
   }
@@ -58,15 +83,14 @@ module "lambda" {
 ```hcl
 module "lambda" {
   source                            = "cypik/lambda/aws"
-  version                           = "1.0.0"
-  name                              = local.name
-  environment                       = local.environment
-  filename                          = "../../lambda_packages/index.zip" # -- The content of index.py should be present in zip format
-  handler                           = "index.lambda_handler"
-  runtime                           = "python3.8"
-  compatible_architectures          = ["arm64"]
+  version                           = "1.0.1"
+  name                              = "lambda"
+  environment                       = "dev"
+  filename                          = "../../lambda_packages/index.zip"
+  handler                           = "lambda_function.handler"
+  runtime                           = "python3.13"
+  compatible_architectures          = ["x86_64"]
   timeout                           = 60
-  reserved_concurrent_executions    = -1
   cloudwatch_logs_retention_in_days = 7
 
   # -- ARNs of Triggers
@@ -88,9 +112,9 @@ module "lambda" {
   # -- Lambda Layer
   create_layers   = true
   layer_names     = ["python_layer"]
-  layer_filenames = ["../../lambda_packages/layer.zip"] # -- The content of layer.py should be present in zip format
+  layer_filenames = ["../../lambda_packages/lambda_code/layer.zip"]
   compatible_runtimes = [
-    ["python3.8", "python3.10"],
+    ["python3.12", "python3.11"],
   ]
 
   # -- Resource-based policy statements
@@ -120,20 +144,22 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6.6 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.31.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.12.2 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.4.0 |
+| <a name="requirement_null"></a> [null](#requirement\_null) | ~> 3.2 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.31.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 6.4.0 |
+| <a name="provider_null"></a> [null](#provider\_null) | ~> 3.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_labels"></a> [labels](#module\_labels) | cypik/labels/aws | 1.3.0 |
+| <a name="module_labels"></a> [labels](#module\_labels) | cypik/labels/aws | 1.0.2 |
 
 ## Resources
 
@@ -153,8 +179,10 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 | [aws_lambda_function.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
 | [aws_lambda_layer_version.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_layer_version) | resource |
 | [aws_lambda_permission.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
+| [aws_lambda_provisioned_concurrency_config.example](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_provisioned_concurrency_config) | resource |
 | [aws_s3_bucket.lambda_bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
 | [aws_s3_object.lambda_zip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
+| [null_resource.zip_lambda](https://registry.terraform.io/providers/hashicorp/null/latest/docs/resources/resource) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_cloudwatch_log_group.lambda](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/cloudwatch_log_group) | data source |
 | [aws_iam_policy_document.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
@@ -184,6 +212,7 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 | <a name="input_enable"></a> [enable](#input\_enable) | Whether to create lambda function. | `bool` | `true` | no |
 | <a name="input_enable_key_rotation"></a> [enable\_key\_rotation](#input\_enable\_key\_rotation) | Specifies whether key rotation is enabled. Defaults to true(security best practice) | `bool` | `true` | no |
 | <a name="input_enable_kms"></a> [enable\_kms](#input\_enable\_kms) | Flag to control creation of kms key for lambda encryption | `bool` | `true` | no |
+| <a name="input_enable_provisioned_concurrency"></a> [enable\_provisioned\_concurrency](#input\_enable\_provisioned\_concurrency) | Enable provisioned concurrency for the Lambda function. Set to true to pre-allocate a specified number of execution environments. | `bool` | `false` | no |
 | <a name="input_enable_source_code_hash"></a> [enable\_source\_code\_hash](#input\_enable\_source\_code\_hash) | Whether to ignore changes to the function's source code hash. Set to true if you manage infrastructure and code deployments separately. | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
 | <a name="input_ephemeral_storage_size"></a> [ephemeral\_storage\_size](#input\_ephemeral\_storage\_size) | Amount of ephemeral storage (/tmp) in MB your Lambda Function can use at runtime. Valid value between 512 MB to 10,240 MB (10 GB). | `number` | `512` | no |
@@ -194,14 +223,15 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 | <a name="input_file_system_local_mount_path"></a> [file\_system\_local\_mount\_path](#input\_file\_system\_local\_mount\_path) | The path where the function can access the file system, starting with /mnt/. | `string` | `null` | no |
 | <a name="input_filename"></a> [filename](#input\_filename) | The path to the function's deployment package within the local filesystem. If defined, The s3\_-prefixed options cannot be used. | `string` | `null` | no |
 | <a name="input_handler"></a> [handler](#input\_handler) | The function entrypoint in your code. | `string` | n/a | yes |
-| <a name="input_iam_actions"></a> [iam\_actions](#input\_iam\_actions) | The actions for Iam Role Policy. | `list(any)` | <pre>[<br/>  "logs:CreateLogStream",<br/>  "logs:CreateLogGroup",<br/>  "logs:PutLogEvents"<br/>]</pre> | no |
+| <a name="input_iam_actions"></a> [iam\_actions](#input\_iam\_actions) | The actions for Iam Role Policy. | `list(any)` | <pre>[<br>  "logs:CreateLogStream",<br>  "logs:CreateLogGroup",<br>  "logs:PutLogEvents"<br>]</pre> | no |
 | <a name="input_iam_role_arn"></a> [iam\_role\_arn](#input\_iam\_role\_arn) | Iam Role arn to be attached to lambda function. | `string` | `null` | no |
 | <a name="input_image_config_command"></a> [image\_config\_command](#input\_image\_config\_command) | The CMD for the docker image | `list(string)` | `[]` | no |
 | <a name="input_image_config_entry_point"></a> [image\_config\_entry\_point](#input\_image\_config\_entry\_point) | The ENTRYPOINT for the docker image | `list(string)` | `[]` | no |
 | <a name="input_image_config_working_directory"></a> [image\_config\_working\_directory](#input\_image\_config\_working\_directory) | The working directory for the docker image | `string` | `null` | no |
 | <a name="input_image_uri"></a> [image\_uri](#input\_image\_uri) | The ECR image URI containing the function's deployment package. | `string` | `null` | no |
 | <a name="input_kms_key_deletion_window"></a> [kms\_key\_deletion\_window](#input\_kms\_key\_deletion\_window) | KMS Key deletion window in days. | `number` | `10` | no |
-| <a name="input_label_order"></a> [label\_order](#input\_label\_order) | Label order, e.g. `name`,`application`. | `list(any)` | <pre>[<br/>  "name",<br/>  "environment"<br/>]</pre> | no |
+| <a name="input_label_order"></a> [label\_order](#input\_label\_order) | Label order, e.g. `name`,`application`. | `list(any)` | <pre>[<br>  "name",<br>  "environment"<br>]</pre> | no |
+| <a name="input_lambda_enabled"></a> [lambda\_enabled](#input\_lambda\_enabled) | Enable Lambda function creation | `bool` | `true` | no |
 | <a name="input_lambda_kms_key_arn"></a> [lambda\_kms\_key\_arn](#input\_lambda\_kms\_key\_arn) | The ARN for the KMS encryption key. | `string` | `null` | no |
 | <a name="input_layer_filenames"></a> [layer\_filenames](#input\_layer\_filenames) | The path to the function's deployment package within the local filesystem. If defined, The s3\_-prefixed options cannot be used. | `list(any)` | `[]` | no |
 | <a name="input_layer_names"></a> [layer\_names](#input\_layer\_names) | A unique name for your Lambda Layer. | `list(any)` | `[]` | no |
@@ -214,10 +244,11 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 | <a name="input_policy_path"></a> [policy\_path](#input\_policy\_path) | Path of policies to that should be added to IAM role for Lambda Function | `string` | `null` | no |
 | <a name="input_principal_org_id"></a> [principal\_org\_id](#input\_principal\_org\_id) | The identifier for your organization in AWS Organizations. Use this to grant permissions to all the AWS accounts under this organization. | `string` | `null` | no |
 | <a name="input_principals"></a> [principals](#input\_principals) | The principal who is getting this permission. e.g. s3.amazonaws.com, an AWS account ID, or any valid AWS service principal such as events.amazonaws.com or sns.amazonaws.com. | `list(any)` | `[]` | no |
+| <a name="input_provisioned_concurrent_executions"></a> [provisioned\_concurrent\_executions](#input\_provisioned\_concurrent\_executions) | The number of provisioned concurrent executions to allocate for the Lambda function when provisioned concurrency is enabled. | `number` | `0` | no |
 | <a name="input_publish"></a> [publish](#input\_publish) | Whether to publish creation/change as new Lambda Function Version. Defaults to false. | `bool` | `false` | no |
 | <a name="input_qualifiers"></a> [qualifiers](#input\_qualifiers) | Query parameter to specify function version or alias name. The permission will then apply to the specific qualified ARN. e.g. arn:aws:lambda:aws-region:acct-id:function:function-name:2 | `list(any)` | `[]` | no |
 | <a name="input_repository"></a> [repository](#input\_repository) | Terraform current module repo | `string` | `"https://github.com/cypik/terraform-aws-lambda"` | no |
-| <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | The amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1. | `number` | `90` | no |
+| <a name="input_reserved_concurrent_executions"></a> [reserved\_concurrent\_executions](#input\_reserved\_concurrent\_executions) | The amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1. | `number` | `-1` | no |
 | <a name="input_runtime"></a> [runtime](#input\_runtime) | Runtimes. | `string` | `"python3.7"` | no |
 | <a name="input_s3_bucket_name"></a> [s3\_bucket\_name](#input\_s3\_bucket\_name) | (Optional) Name of the S3 bucket for lambda function code. | `string` | `null` | no |
 | <a name="input_s3_buckets"></a> [s3\_buckets](#input\_s3\_buckets) | The S3 bucket location containing the function's deployment package. Conflicts with filename. This bucket must reside in the same AWS region where you are creating the Lambda function. | `list(any)` | `[]` | no |
@@ -231,11 +262,11 @@ This project is licensed under the **MIT** License - see the [LICENSE](https://g
 | <a name="input_snap_start"></a> [snap\_start](#input\_snap\_start) | (Optional) Snap start settings for low-latency startups | `bool` | `false` | no |
 | <a name="input_source_accounts"></a> [source\_accounts](#input\_source\_accounts) | This parameter is used for S3 and SES. The AWS account ID (without a hyphen) of the source owner. | `list(any)` | `[]` | no |
 | <a name="input_source_arns"></a> [source\_arns](#input\_source\_arns) | When granting Amazon S3 or CloudWatch Events permission to invoke your function, you should specify this field with the Amazon Resource Name (ARN) for the S3 Bucket or CloudWatch Events Rule as its value. This ensures that only events generated from the specified bucket or rule can invoke the function. | `list(any)` | `[]` | no |
-| <a name="input_source_file"></a> [source\_file](#input\_source\_file) | Path of source file that is required to be converted in `.zip` file | `string` | `null` | no |
 | <a name="input_statement_ids"></a> [statement\_ids](#input\_statement\_ids) | A unique statement identifier. By default generated by Terraform. | `list(any)` | `[]` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet ids for vpc config. | `list(any)` | `[]` | no |
-| <a name="input_timeout"></a> [timeout](#input\_timeout) | The amount of time in seconds your Lambda Function will run. Defaults to 3. | `number` | `10` | no |
+| <a name="input_timeout"></a> [timeout](#input\_timeout) | The amount of time in seconds your Lambda Function will run. Defaults to 3. | `number` | `60` | no |
 | <a name="input_tracing_mode"></a> [tracing\_mode](#input\_tracing\_mode) | Tracing mode of the Lambda Function. Valid value can be either PassThrough or Active. | `string` | `null` | no |
+| <a name="input_use_s3"></a> [use\_s3](#input\_use\_s3) | Use S3 for Lambda deployment package | `bool` | `false` | no |
 | <a name="input_variables"></a> [variables](#input\_variables) | A map that defines environment variables for the Lambda function. | `map(any)` | `{}` | no |
 
 ## Outputs
